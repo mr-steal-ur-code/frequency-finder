@@ -2,15 +2,25 @@ import { CST } from "../CST"
 
 export default class GameScene extends Phaser.Scene {
   randomHeight: number;
+  randomWidth: number;
+  targetHeight: number;
+  targetWidth: number;
   targetSpacing: number;
   randomSpacing: number;
+  score: number;
+  timer: number;
   constructor() {
     super({
       key: CST.SCENES.GAME
     })
     this.randomHeight = 150;
+    this.randomWidth = 1;
     this.targetSpacing = Math.floor(Math.random() * 61) - 30;
     this.randomSpacing = 0;
+    this.targetHeight = 0;
+    this.targetWidth = 0;
+    this.score = 0;
+    this.timer = 0;
 
     console.log("tar space:", this.targetSpacing);
 
@@ -44,9 +54,8 @@ export default class GameScene extends Phaser.Scene {
   create() {
     let heightAdjustment = 0;
     let spaceAdjustment = 0;
-    console.log("random:", this.randomSpacing);
 
-    const adjustmentSpeed = .5;
+    const adjustmentSpeed = .3;
     const adjustLine = () => {
       // Adjust the height based on the accumulated value
       if (this.randomHeight < 350) {
@@ -71,10 +80,23 @@ export default class GameScene extends Phaser.Scene {
     const keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
     const keyS = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
     const keyD = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
+    const keyQ = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Q);
+    const keyE = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
     let wKeypressed = false;
     let sKeypressed = false;
     let aKeypressed = false;
     let dKeypressed = false;
+
+    keyQ.on('down', () => {
+      if (this.randomWidth > 1) {
+        this.randomWidth -= 1;
+      } else return
+    });
+    keyE.on('down', () => {
+      if (this.randomWidth <= 21) {
+        this.randomWidth += 1;
+      } else return
+    });
 
     keyW.on('down', () => {
       wKeypressed = true;
@@ -116,12 +138,17 @@ export default class GameScene extends Phaser.Scene {
         spaceAdjustment = 0;
       }
     });
+    const scoreText = this.add.text(10, 0, `SCORE: ${this.score}`, { fontFamily: '"Roboto Condensed"', fontSize: 'px' })
+    scoreText.scrollFactorX = 0
+    scoreText.scrollFactorY = 0
+    scoreText.setFontSize(60)
+    scoreText.setDepth(2)
 
     this.update = () => {
       adjustLine();
       // Update the line position based on the new height
       graphics.clear(); // Clear previous line
-      graphics.lineStyle(4, 0xFF6666);
+      graphics.lineStyle(this.randomWidth, 0xFF6666);
       graphics.beginPath();
       graphics.moveTo(0, 350);
       graphics.lineTo(add(100, false), this.randomHeight);
@@ -133,23 +160,36 @@ export default class GameScene extends Phaser.Scene {
       graphics.lineTo(add(700, false), this.randomHeight);
       graphics.lineTo(800, 350);
       graphics.strokePath();
+
+      const tolerance = 2; // Adjust tolerance as needed
+      if (Math.abs(this.randomHeight - this.targetHeight) <= tolerance &&
+        Math.abs(this.randomSpacing - this.targetSpacing) <= tolerance &&
+        Math.abs(this.randomWidth - this.targetWidth) <= 1) {
+        this.score += 100;
+        console.log("score:", this.score);
+        scoreText.setText(`SCORE: ${this.score}`);
+      }
     };
-
-    let targetHeight;
-
     do {
-      targetHeight = Math.floor(Math.random() * (300 - 100 + 1)) + 100;
+      this.targetHeight = Math.floor(Math.random() * (300 - 100 + 1)) + 100;
       this.randomHeight = Math.floor(Math.random() * (300 - 100 + 1)) + 100;
-    } while (Math.abs(targetHeight - this.randomHeight) <= 50);
+    } while (Math.abs(this.targetHeight - this.randomHeight) <= 50);
 
     do {
-      this.randomSpacing = Math.floor(Math.random() * 201) - 100;
+      this.targetWidth = Math.floor(Math.random() * (20 - 1 + 1)) + 1;
+      this.randomWidth = Math.floor(Math.random() * (20 - 1 + 1)) + 1;
+    } while (Math.abs(this.targetWidth - this.randomWidth) <= 5);
+
+    do {
+      this.randomSpacing = Math.floor(Math.random() * 301) - 150;
       console.log("difference:", Math.abs(this.randomSpacing - this.targetSpacing));
     } while (Math.abs(this.randomSpacing - this.targetSpacing) < 40);
 
+
+    console.log("width:", this.randomWidth, this.targetWidth);
+
     const add = (num: number, target: boolean) => {
       if (!target) {
-        console.log("random:", this.randomSpacing);
         return num + this.randomSpacing;
       } else {
         return num + this.targetSpacing;
@@ -166,29 +206,29 @@ export default class GameScene extends Phaser.Scene {
     imageGroup.children.iterate(function (child: any) {
       child.setScale(0.5);
     });
-    const cross = this.add.image(0, 0, "cross").setOrigin(0);
+    const cross = this.add.image(775, 30, "cross");
     cross.setScale(.5);
     cross.setInteractive();
     cross.on("pointerdown", () => {
       this.scene.start(CST.SCENES.TITLE)
     })
-    // The winning line height
+    // The winning line
     const targetGraphic = this.add.graphics();
-    targetGraphic.lineStyle(4, 0xFF0000);
+    targetGraphic.lineStyle(this.targetWidth, 0xFF0000);
     targetGraphic.beginPath();
     targetGraphic.moveTo(0, 350);
-    targetGraphic.lineTo(add(100, true), targetHeight);
+    targetGraphic.lineTo(add(100, true), this.targetHeight);
     targetGraphic.lineTo(add(200, true), 350);
-    targetGraphic.lineTo(add(300, true), targetHeight);
+    targetGraphic.lineTo(add(300, true), this.targetHeight);
     targetGraphic.lineTo(add(400, true), 350);
-    targetGraphic.lineTo(add(500, true), targetHeight);
+    targetGraphic.lineTo(add(500, true), this.targetHeight);
     targetGraphic.lineTo(add(600, true), 350);
-    targetGraphic.lineTo(add(700, true), targetHeight);
+    targetGraphic.lineTo(add(700, true), this.targetHeight);
     targetGraphic.lineTo(800, 350);
     targetGraphic.strokePath();
-    // The random line height
+    // The random line
     const graphics = this.add.graphics();
-    graphics.lineStyle(4, 0xFF6666);
+    graphics.lineStyle(this.randomWidth, 0xFF6666);
     graphics.beginPath();
     graphics.moveTo(0, 350);
     graphics.lineTo(add(100, false), this.randomHeight);
