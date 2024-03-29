@@ -1,0 +1,2 @@
+They can then be loaded by Phaser with this.image.load('my-image', 'images/my-image.png').
+
