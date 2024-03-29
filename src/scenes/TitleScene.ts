@@ -10,7 +10,7 @@ export default class TitleScene extends Phaser.Scene {
   preload() {
     this.load.image('background', 'assets/images/titleBackground.jpg');
     this.load.image('start', 'assets/ui/StartButton.png');
-    this.load.image('exit', 'assets/ui/ExitButton.png');
+    // this.load.image('exit', 'assets/ui/ExitButton.png');
     this.load.image("check", "assets/ui/check.png");
     this.load.image("cross", "assets/ui/cross.png");
     this.load.audio("title_music", "./assets/music/title_music.mp3")
@@ -24,10 +24,9 @@ export default class TitleScene extends Phaser.Scene {
 
     //simulate load
 
-    for (let i = 0; i < 2000; i++) {
+    for (let i = 0; i < 1000; i++) {
       this.load.text(`${i}`);
     }
-
 
     this.load.on("progress", (percent: any) => {
       loadingBar.fillRect(0, this.game.renderer.height / 2, this.game.renderer.width * percent, 40);
@@ -38,14 +37,14 @@ export default class TitleScene extends Phaser.Scene {
   create() {
     this.add.image(400, 300, 'background')
     const startButton = this.add.image(400, 350, 'start')
-    const exitButton = this.add.image(400, 475, 'exit')
-    this.add.text(300, 100, "Frequency");
+    // const exitButton = this.add.image(400, 475, 'exit')
     const check = this.add.image(280, 350, "check");
     check.setScale(.5)
     check.setVisible(false);
-    const cross = this.add.image(280, 470, "cross");
-    cross.setScale(.5)
-    cross.setVisible(false);
+    // const cross = this.add.image(280, 470, "cross");
+    // cross.setScale(.5)
+    // cross.setVisible(false);
+
     // this.sound.play("title_music", {
     //   loop: true
     // })
@@ -63,14 +62,14 @@ export default class TitleScene extends Phaser.Scene {
     startButton.on("pointerdown", () => {
       this.scene.start(CST.SCENES.GAME)
     });
-    exitButton.setInteractive();
-    exitButton.on("pointerover", () => {
-      console.log("in");
-      cross.setVisible(true);
-    })
-    exitButton.on("pointerout", () => {
-      console.log("out");
-      cross.setVisible(false);
-    })
+    // exitButton.setInteractive();
+    // exitButton.on("pointerover", () => {
+    //   console.log("in");
+    //   cross.setVisible(true);
+    // })
+    // exitButton.on("pointerout", () => {
+    //   console.log("out");
+    //   cross.setVisible(false);
+    // })
   }
 }
