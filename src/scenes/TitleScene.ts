@@ -23,10 +23,9 @@ export default class TitleScene extends Phaser.Scene {
     })
 
     //simulate load
-
-    for (let i = 0; i < 1000; i++) {
-      this.load.text(`${i}`);
-    }
+    // for (let i = 0; i < 1000; i++) {
+    //   this.load.text(`${i}`);
+    // }
 
     this.load.on("progress", (percent: any) => {
       loadingBar.fillRect(0, this.game.renderer.height / 2, this.game.renderer.width * percent, 40);
@@ -45,10 +44,10 @@ export default class TitleScene extends Phaser.Scene {
     // cross.setScale(.5)
     // cross.setVisible(false);
 
-    // this.sound.play("title_music", {
-    //   loop: true
-    // })
-    // this.sound.pauseOnBlur = false;
+    this.sound.play("title_music", {
+      loop: true
+    })
+    this.sound.pauseOnBlur = false;
 
 
     startButton.setInteractive();

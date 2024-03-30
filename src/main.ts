@@ -25,7 +25,7 @@ const config: Phaser.Types.Core.GameConfig = {
 
   },
   scene: [
-    // LoadScene, TitleScene, 
+    LoadScene, TitleScene,
     GameScene],
 }
 

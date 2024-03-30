@@ -1,4 +1,5 @@
 import { CST } from "../CST"
+import CountdownController from "./CountdownController";
 
 export default class GameScene extends Phaser.Scene {
   randomHeight: number;
@@ -8,22 +9,20 @@ export default class GameScene extends Phaser.Scene {
   targetSpacing: number;
   randomSpacing: number;
   score: number;
-  timer: number;
+  countDown: CountdownController | undefined;
+  hasScored: boolean;
   constructor() {
     super({
       key: CST.SCENES.GAME
     })
     this.randomHeight = 150;
     this.randomWidth = 1;
-    this.targetSpacing = Math.floor(Math.random() * 61) - 30;
+    this.targetSpacing = 0;
     this.randomSpacing = 0;
     this.targetHeight = 0;
     this.targetWidth = 0;
     this.score = 0;
-    this.timer = 0;
-
-    console.log("tar space:", this.targetSpacing);
-
+    this.hasScored = false;
   }
   preload() {
     this.load.image("game_background", "./assets/images/gameBackground.png");
@@ -41,9 +40,9 @@ export default class GameScene extends Phaser.Scene {
     })
 
     //simulate load
-    // for (let i = 0; i < 2500; i++) {
-    //   this.load.text(`${i}`);
-    // }
+    for (let i = 0; i < 1500; i++) {
+      this.load.text(`${i}`);
+    }
 
     this.load.on("progress", (percent: any) => {
       loadingBar.fillRect(0, this.game.renderer.height / 2, this.game.renderer.width * percent, 40);
@@ -52,6 +51,36 @@ export default class GameScene extends Phaser.Scene {
 
   }
   create() {
+    const generateHeights = () => {
+      this.randomHeight = 0;
+      this.targetHeight = 0;
+      do {
+        this.targetHeight = Math.round(Math.random() * (300 - 100 + 1)) + 100;
+        this.randomHeight = Math.round(Math.random() * (300 - 100 + 1)) + 100;
+      } while (Math.abs(this.targetHeight - this.randomHeight) <= 50);
+    }
+
+    const generateWidth = () => {
+      this.randomWidth = 0;
+      this.targetWidth = 0;
+      do {
+        this.targetWidth = Math.round(Math.random() * (20 - 1 + 1)) + 1;
+        this.randomWidth = Math.round(Math.random() * (20 - 1 + 1)) + 1;
+      } while (Math.abs(this.targetWidth - this.randomWidth) <= 5);
+    }
+
+    const generateSpacing = () => {
+      this.randomSpacing = 0;
+      this.targetSpacing = 0;
+      do {
+        this.targetSpacing = Math.round(Math.random() * 61) - 30;
+        this.randomSpacing = Math.round(Math.random() * 301) - 150;
+      } while (Math.abs(this.randomSpacing - this.targetSpacing) < 40);
+    }
+    generateHeights();
+    generateWidth();
+    generateSpacing();
+    const { width } = this.scale;
     let heightAdjustment = 0;
     let spaceAdjustment = 0;
 
@@ -138,17 +167,37 @@ export default class GameScene extends Phaser.Scene {
         spaceAdjustment = 0;
       }
     });
-    const scoreText = this.add.text(10, 0, `SCORE: ${this.score}`, { fontFamily: '"Roboto Condensed"', fontSize: 'px' })
-    scoreText.scrollFactorX = 0
-    scoreText.scrollFactorY = 0
-    scoreText.setFontSize(60)
-    scoreText.setDepth(2)
+    const scoreText = this.add.text(5, 5, `SCORE: ${this.score}`, { fontFamily: '"Roboto Condensed"', fontSize: '32px' })
+    scoreText.setDepth(2);
+    const timeText = this.add.text(width * 0.5, 25, `${this.countDown?.duration}`, { fontFamily: '"Roboto Condensed"', fontSize: '30px' }).setOrigin(0.5);
+    timeText.setDepth(2);
 
     this.update = () => {
       adjustLine();
-      // Update the line position based on the new height
+      // Update the line position based on the new variables
+      targetGraphic.clear();
+      if (this.hasScored) {
+        targetGraphic.lineStyle(this.targetWidth, 0x00FF00);
+      } else
+        targetGraphic.lineStyle(this.targetWidth, 0xFF0000);
+      targetGraphic.beginPath();
+      targetGraphic.moveTo(0, 350);
+      targetGraphic.lineTo(add(100, true), this.targetHeight);
+      targetGraphic.lineTo(add(200, true), 350);
+      targetGraphic.lineTo(add(300, true), this.targetHeight);
+      targetGraphic.lineTo(add(400, true), 350);
+      targetGraphic.lineTo(add(500, true), this.targetHeight);
+      targetGraphic.lineTo(add(600, true), 350);
+      targetGraphic.lineTo(add(700, true), this.targetHeight);
+      targetGraphic.lineTo(800, 350);
+      targetGraphic.strokePath();
+
       graphics.clear(); // Clear previous line
-      graphics.lineStyle(this.randomWidth, 0xFF6666);
+      if (this.hasScored) {
+        graphics.lineStyle(this.randomWidth, 0x00FF00);
+      } else {
+        graphics.lineStyle(this.randomWidth, 0xFF6666);
+      }
       graphics.beginPath();
       graphics.moveTo(0, 350);
       graphics.lineTo(add(100, false), this.randomHeight);
@@ -161,38 +210,36 @@ export default class GameScene extends Phaser.Scene {
       graphics.lineTo(800, 350);
       graphics.strokePath();
 
-      const tolerance = 2; // Adjust tolerance as needed
-      if (Math.abs(this.randomHeight - this.targetHeight) <= tolerance &&
-        Math.abs(this.randomSpacing - this.targetSpacing) <= tolerance &&
-        Math.abs(this.randomWidth - this.targetWidth) <= 1) {
+      const tolerance = 5; // Adjust tolerance as needed
+      if (
+        Math.abs(Math.round(this.randomHeight) - this.targetHeight) <= tolerance &&
+        Math.abs(Math.round(this.randomSpacing) - this.targetSpacing) <= tolerance &&
+        Math.abs(Math.round(this.randomWidth) - this.targetWidth) <= 1 &&
+        !this.hasScored
+      ) {
+        this.hasScored = true;
         this.score += 100;
         console.log("score:", this.score);
         scoreText.setText(`SCORE: ${this.score}`);
       }
+      if (this.hasScored) {
+        this.countDown?.stop();
+        setTimeout(() => {
+          generateHeights();
+          generateWidth();
+          generateSpacing();
+          this.hasScored = false;
+          this.countDown?.start(this.handleCountdownFinish.bind(this), 15000);
+        }, 500);
+      } else { graphics.lineStyle(this.randomWidth, 0xFF6666); }
+      this.countDown?.update();
     };
-    do {
-      this.targetHeight = Math.floor(Math.random() * (300 - 100 + 1)) + 100;
-      this.randomHeight = Math.floor(Math.random() * (300 - 100 + 1)) + 100;
-    } while (Math.abs(this.targetHeight - this.randomHeight) <= 50);
-
-    do {
-      this.targetWidth = Math.floor(Math.random() * (20 - 1 + 1)) + 1;
-      this.randomWidth = Math.floor(Math.random() * (20 - 1 + 1)) + 1;
-    } while (Math.abs(this.targetWidth - this.randomWidth) <= 5);
-
-    do {
-      this.randomSpacing = Math.floor(Math.random() * 301) - 150;
-      console.log("difference:", Math.abs(this.randomSpacing - this.targetSpacing));
-    } while (Math.abs(this.randomSpacing - this.targetSpacing) < 40);
-
-
-    console.log("width:", this.randomWidth, this.targetWidth);
 
     const add = (num: number, target: boolean) => {
       if (!target) {
-        return num + this.randomSpacing;
+        return Math.floor(num + this.randomSpacing);
       } else {
-        return num + this.targetSpacing;
+        return Math.floor(num + this.targetSpacing);
       }
     }
 
@@ -240,5 +287,16 @@ export default class GameScene extends Phaser.Scene {
     graphics.lineTo(add(700, false), this.randomHeight);
     graphics.lineTo(800, 350);
     graphics.strokePath();
+
+    this.countDown = new CountdownController(this, timeText);
+    this.countDown.start(this.handleCountdownFinish.bind(this), 15000);
+
+  }
+  handleCountdownFinish = () => {
+    console.log("finished");
+  }
+
+  gameOver() {
+    console.log("game over")
   }
 }
