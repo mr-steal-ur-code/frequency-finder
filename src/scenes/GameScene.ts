@@ -38,11 +38,18 @@ export default class GameScene extends Phaser.Scene {
         color: 0xffffff
       }
     })
+    const loadingText = this.add.text(
+      (this.game.renderer.width / 2),
+      (this.game.renderer.height / 2 - 50),
+      'Loading...',
+      { fontFamily: 'Arial', fontSize: '24px', color: "#d6d6d6" }
+    );
+    loadingText.setOrigin(0.5);
 
     //simulate load
-    for (let i = 0; i < 1500; i++) {
-      this.load.text(`${i}`);
-    }
+    // for (let i = 0; i < 1500; i++) {
+    //   this.load.text(`${i}`);
+    // }
 
     this.load.on("progress", (percent: any) => {
       loadingBar.fillRect(0, this.game.renderer.height / 2, this.game.renderer.width * percent, 40);

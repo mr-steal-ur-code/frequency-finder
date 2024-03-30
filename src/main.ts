@@ -4,6 +4,7 @@ import "../style.css";
 import TitleScene from './scenes/TitleScene'
 import LoadScene from './scenes/LoadScene'
 import GameScene from './scenes/GameScene'
+import HowToPlay from './scenes/HowToPlay';
 
 const sizes = {
   width: 800,
@@ -25,7 +26,7 @@ const config: Phaser.Types.Core.GameConfig = {
 
   },
   scene: [
-    LoadScene, TitleScene,
+    LoadScene, TitleScene, HowToPlay,
     GameScene],
 }
 
