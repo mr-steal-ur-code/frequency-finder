@@ -38,13 +38,16 @@ export default class TitleScene extends Phaser.Scene {
     })
   }
 
-  create() {
+  create(data: any) {
     this.add.image(400, 300, 'background');
-    this.sound.play("main_menu_theme", {
-      loop: true,
-      volume: .5
-    })
-    this.sound.pauseOnBlur = false;
+    if (data["restartMenuMusic"] === true || data["restartMenuMusic"] === undefined) {
+      this.sound.stopAll();
+      this.sound.play("main_menu_theme", {
+        loop: true,
+        volume: .2
+      })
+      this.sound.pauseOnBlur = false;
+    }
     this.add.image(400, 170, 'logo');
 
     const howToPlayButton = this.add.image(400, 360, "how_to_play");

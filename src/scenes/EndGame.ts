@@ -47,7 +47,7 @@ export default class EndGame extends Phaser.Scene {
       menuButton.setScale(1);
     })
     menuButton.on("pointerdown", () => {
-      this.scene.start(CST.SCENES.TITLE)
+      this.scene.start(CST.SCENES.TITLE, { restartMenuMusic: true })
     });
   }
 }

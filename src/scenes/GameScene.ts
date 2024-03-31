@@ -232,7 +232,7 @@ export default class GameScene extends Phaser.Scene {
         this.play3 = false;
       } else if (heightDif <= tolerance &&
         spaceDif <= tolerance &&
-        widthDif <= tolerance &&
+        widthDif <= 1 &&
         !this.hasScored) {
         playAudioSprite(this.play1, this.play2, this.play3, this.playScore);
       } else if (heightDif <= 100 &&
@@ -300,7 +300,7 @@ export default class GameScene extends Phaser.Scene {
     exitButton.setInteractive();
     exitButton.on("pointerdown", () => {
       this.sound.stopAll();
-      this.scene.start(CST.SCENES.TITLE);
+      this.scene.start(CST.SCENES.TITLE, { restartMenuMusic: true });
     });
     exitButton.on("pointerover", () => {
       this.sound.play("menu_hover", {

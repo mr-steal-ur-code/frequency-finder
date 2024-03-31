@@ -22,7 +22,7 @@ export default class HowToPlay extends Phaser.Scene {
       back.setScale(.3)
     })
     back.on("pointerdown", () => {
-      this.scene.start(CST.SCENES.TITLE)
+      this.scene.start(CST.SCENES.TITLE, { restartMenuMusic: false })
     })
   }
 }
