@@ -34,7 +34,7 @@ export default class GameScene extends Phaser.Scene {
   }
   preload() {
     this.load.image("game_background", "./assets/images/gameBackground.png");
-    this.load.image("exit", "./assets/ui/exitbutton.png");
+    //this.load.image("exit", "./assets/ui/exitbutton.png");
     this.load.image("right", "./assets/ui/right.png");
     this.load.image("left", "./assets/ui/left.png");
     this.load.image("up", "./assets/ui/up.png");
@@ -68,6 +68,7 @@ export default class GameScene extends Phaser.Scene {
   }
   create(data: any) {
     this.sound.stopAll();
+    this.sound.playAudioSprite("radio", "radio1", { volume: .3 });
     let prevPlay1 = false;
     let prevPlay2 = false;
     let prevPlay3 = false;
@@ -77,19 +78,19 @@ export default class GameScene extends Phaser.Scene {
       if (play3 && !prevPlay3) {
         console.log("radio3");
         this.sound.stopAll();
-        this.sound.playAudioSprite("radio", "radio3");
+        this.sound.playAudioSprite("radio", "radio3", { volume: .3 });
       } else if (play2 && !prevPlay2) {
         console.log("radio2");
         this.sound.stopAll();
-        this.sound.playAudioSprite("radio", "radio2");
+        this.sound.playAudioSprite("radio", "radio2", { volume: .3 });
       } else if (play1 && !prevPlay1) {
         console.log("radio1");
         this.sound.stopAll();
-        this.sound.playAudioSprite("radio", "radio1");
+        this.sound.playAudioSprite("radio", "radio1", { volume: .3 });
       } else if (playScore && !prevPlayScore) {
         console.log("play score");
         this.sound.stopAll();
-        this.sound.playAudioSprite("radio", "score");
+        this.sound.playAudioSprite("radio", "score", { volume: .3 });
       }
 
       // Update previous values
@@ -216,43 +217,44 @@ export default class GameScene extends Phaser.Scene {
       graphics.lineTo(800, 350);
       graphics.strokePath();
 
-      const tolerance = 5; // Adjust tolerance as needed
+      const tolerance = 3; // Adjust tolerance as needed
       const heightDif = Math.abs(Math.round(this.randomHeight) - this.targetHeight);
       const spaceDif = Math.abs(Math.round(this.randomSpacing) - this.targetSpacing);
       const widthDif = Math.abs(Math.round(this.randomWidth) - this.targetWidth);
 
-      if (heightDif <= 35 &&
-        spaceDif <= 15 &&
-        widthDif <= 7 &&
-        !this.hasScored) {
-        console.log("radio3");
-        this.playScore = false;
-        this.play1 = false;
-        this.play2 = false;
-        this.play3 = true;
-      } else if (heightDif <= tolerance &&
-        spaceDif <= tolerance &&
-        widthDif <= tolerance &&
-        !this.hasScored) {
-        playAudioSprite(this.play1, this.play2, this.play3, this.playScore);
-      } else if (heightDif <= 70 &&
-        spaceDif <= 30 &&
-        widthDif <= 12 &&
-        !this.hasScored) {
-        console.log("radio2");
-        this.playScore = false;
-        this.play1 = false;
-        this.play2 = true;
-        this.play3 = false;
-      } else if (heightDif > 70 &&
-        spaceDif > 30 &&
-        widthDif > 12 &&
+      if (heightDif > 70 &&
+        spaceDif > 25 &&
         !this.hasScored) {
         console.log("radio1");
         this.playScore = false;
         this.play1 = true;
         this.play2 = false;
         this.play3 = false;
+      } else if (heightDif <= tolerance &&
+        spaceDif <= tolerance &&
+        widthDif <= tolerance &&
+        !this.hasScored) {
+        playAudioSprite(this.play1, this.play2, this.play3, this.playScore);
+      } else if (heightDif <= 100 &&
+        spaceDif <= 25 &&
+        widthDif <= 15 &&
+        !this.hasScored) {
+        if (heightDif <= 25 &&
+          spaceDif <= 10 &&
+          widthDif <= 6 &&
+          !this.hasScored) {
+          console.log("radio3");
+          this.playScore = false;
+          this.play1 = false;
+          this.play2 = false;
+          this.play3 = true;
+        } else {
+          console.log("radio2");
+          this.playScore = false;
+          this.play1 = false;
+          this.play2 = true;
+          this.play3 = false;
+        }
       }
       playAudioSprite(this.play1, this.play2, this.play3, this.playScore);
 
@@ -273,7 +275,7 @@ export default class GameScene extends Phaser.Scene {
           generateSpacing();
           this.playScore = false;
           this.hasScored = false;
-        }, 300
+        }, 400
         );
       } else { graphics.lineStyle(this.randomWidth, 0xFF6666); this.playScore = false; }
       this.countDown?.update();
@@ -294,7 +296,7 @@ export default class GameScene extends Phaser.Scene {
     const downImg = this.add.image(375, 525, "down").setScale(0.5).setOrigin(0);
     const leftWidth = this.add.image(500, 475, "left").setScale(0.5).setOrigin(0);
     const rightWidth = this.add.image(600, 475, "right").setScale(0.5).setOrigin(0);
-    const exitButton = this.add.image(685, 2, "exit").setScale(.3).setOrigin(0);
+    const exitButton = this.add.text(745, 2, "exit", { fontSize: "20px" }).setOrigin(0);
     exitButton.setInteractive();
     exitButton.on("pointerdown", () => {
       this.sound.stopAll();
@@ -304,10 +306,10 @@ export default class GameScene extends Phaser.Scene {
       this.sound.play("menu_hover", {
         volume: 0.1
       });
-      exitButton.setScale(.33);
+      exitButton.setFill("#FFFF00");
     });
     exitButton.on("pointerout", () => {
-      exitButton.setScale(.3);
+      exitButton.setFill("#FFFFff");
     });
 
     //keybinding
@@ -498,9 +500,9 @@ export default class GameScene extends Phaser.Scene {
     leftWidth.on("pointerdown", () => {
       if (Math.round(this.randomWidth) > 1) {
         if (this.randomSpacing >= -199) {
-          leftImg.setScale(.55).setTint(0x00ff00);
-        } else leftImg.setScale(.55).setTint(0xff0000);
-      } else leftWidth.setScale(.55).setTint(0xff0000);
+          leftWidth.setScale(.55).setTint(0x00ff00);
+        } else leftWidth.setScale(.55).setTint(0xff0000);
+      }
       if (this.randomWidth >= 1) {
         widthAdjustment = -widthAdjustmentSpeed
       } else return
