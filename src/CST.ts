@@ -3,6 +3,7 @@ export const CST = {
     LOAD: "LOAD",
     TITLE: "TITLE",
     GAME: "GAME",
-    HOWTOPLAY: "HOWTOPLAY"
+    HOWTOPLAY: "HOWTOPLAY",
+    ENDGAME: "ENDGAME"
   }
 }

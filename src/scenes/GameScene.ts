@@ -1,5 +1,5 @@
 import { CST } from "../CST"
-import CountdownController from "./CountdownController";
+import CountdownController from "../controllers/CountdownController";
 
 export default class GameScene extends Phaser.Scene {
   randomHeight: number;
@@ -26,11 +26,14 @@ export default class GameScene extends Phaser.Scene {
   }
   preload() {
     this.load.image("game_background", "./assets/images/gameBackground.png");
-    this.load.image("cross", "assets/ui/cross.png");
+    this.load.image("exit", "assets/ui/exitbutton.png");
     this.load.image("right", "assets/ui/right.png");
     this.load.image("left", "assets/ui/left.png");
     this.load.image("up", "assets/ui/up.png");
     this.load.image("down", "assets/ui/down.png");
+    this.load.audio("radio1", "assets/sfx/radio1.mp3");
+    this.load.audio("radio2", "assets/sfx/radio2.mp3");
+    this.load.audio("radio3", "assets/sfx/radio3.mp3");
 
     //loading bar
     const loadingBar = this.add.graphics({
@@ -47,17 +50,18 @@ export default class GameScene extends Phaser.Scene {
     loadingText.setOrigin(0.5);
 
     //simulate load
-    // for (let i = 0; i < 1500; i++) {
-    //   this.load.text(`${i}`);
-    // }
+    for (let i = 0; i < 500; i++) {
+      this.load.text(`${i}`);
+    }
 
     this.load.on("progress", (percent: any) => {
       loadingBar.fillRect(0, this.game.renderer.height / 2, this.game.renderer.width * percent, 40);
-      console.log(percent);
+      console.log("game percent:", percent);
     })
 
   }
-  create() {
+  create(data: any) {
+    this.score = data["score"] ?? 0;
     const generateHeights = () => {
       this.randomHeight = 0;
       this.targetHeight = 0;
@@ -89,9 +93,28 @@ export default class GameScene extends Phaser.Scene {
     generateSpacing();
     const { width } = this.scale;
     let heightAdjustment = 0;
+    let widthAdjustment = 0;
     let spaceAdjustment = 0;
-
-    const adjustmentSpeed = .3;
+    const adjustmentSpeed = .4;
+    const widthAdjustmentSpeed = .08;
+    //Adjust the width of line
+    const adjustWidth = () => {
+      if (Math.round(this.randomWidth) <= 1 && widthAdjustment <= 0) {
+        return;
+      }
+      if (Math.round(this.randomWidth) > 21) {
+        this.randomWidth -= 1;
+      }
+      if (Math.round(this.randomWidth) <= 1) {
+        this.randomWidth += 1;
+      }
+      if (Math.round(this.randomWidth) <= 21) {
+        this.randomWidth += widthAdjustment;
+      }
+      if (this.randomWidth >= 1) {
+        this.randomWidth += widthAdjustment;
+      }
+    }
     const adjustLine = () => {
       // Adjust the height based on the accumulated value
       if (this.randomHeight < 350) {
@@ -112,81 +135,20 @@ export default class GameScene extends Phaser.Scene {
       } else { this.randomSpacing = -200 }
     };
 
-    const keyW = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
-    const keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
-    const keyS = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
-    const keyD = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
-    const keyQ = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Q);
-    const keyE = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
-    let wKeypressed = false;
-    let sKeypressed = false;
-    let aKeypressed = false;
-    let dKeypressed = false;
-
-    keyQ.on('down', () => {
-      if (this.randomWidth > 1) {
-        this.randomWidth -= 1;
-      } else return
-    });
-    keyE.on('down', () => {
-      if (this.randomWidth <= 21) {
-        this.randomWidth += 1;
-      } else return
-    });
-
-    keyW.on('down', () => {
-      wKeypressed = true;
-      heightAdjustment = -adjustmentSpeed;
-    });
-    keyW.on('up', () => {
-      wKeypressed = false;
-      if (!wKeypressed && !sKeypressed) {
-        heightAdjustment = 0;
-      }
-    });
-    keyS.on('down', () => {
-      sKeypressed = true;
-      heightAdjustment = adjustmentSpeed;
-    });
-    keyS.on('up', () => {
-      sKeypressed = false;
-      if (!wKeypressed && !sKeypressed) {
-        heightAdjustment = 0;
-      }
-    });
-    keyA.on('down', function () {
-      aKeypressed = true;
-      spaceAdjustment = -adjustmentSpeed;
-    });
-    keyA.on('up', function () {
-      aKeypressed = false;
-      if (!aKeypressed && !dKeypressed) {
-        spaceAdjustment = 0;
-      }
-    });
-    keyD.on('down', function () {
-      dKeypressed = true;
-      spaceAdjustment = adjustmentSpeed;
-    });
-    keyD.on('up', function () {
-      dKeypressed = false;
-      if (!aKeypressed && !dKeypressed) {
-        spaceAdjustment = 0;
-      }
-    });
     const scoreText = this.add.text(5, 5, `SCORE: ${this.score}`, { fontFamily: '"Roboto Condensed"', fontSize: '32px' })
     scoreText.setDepth(2);
-    const timeText = this.add.text(width * 0.5, 25, `${this.countDown?.duration}`, { fontFamily: '"Roboto Condensed"', fontSize: '30px' }).setOrigin(0.5);
+    const timeText = this.add.text(width * 0.5, 25, `${this.countDown?.label}`, { fontFamily: '"Roboto Condensed"', fontSize: '30px' }).setOrigin(0.5);
     timeText.setDepth(2);
 
     this.update = () => {
+      adjustWidth();
       adjustLine();
       // Update the line position based on the new variables
       targetGraphic.clear();
       if (this.hasScored) {
         targetGraphic.lineStyle(this.targetWidth, 0x00FF00);
       } else
-        targetGraphic.lineStyle(this.targetWidth, 0xFF0000);
+        targetGraphic.lineStyle(this.targetWidth, 0xFF6666);
       targetGraphic.beginPath();
       targetGraphic.moveTo(0, 350);
       targetGraphic.lineTo(add(100, true), this.targetHeight);
@@ -203,7 +165,7 @@ export default class GameScene extends Phaser.Scene {
       if (this.hasScored) {
         graphics.lineStyle(this.randomWidth, 0x00FF00);
       } else {
-        graphics.lineStyle(this.randomWidth, 0xFF6666);
+        graphics.lineStyle(this.randomWidth, 0xFF0000);
       }
       graphics.beginPath();
       graphics.moveTo(0, 350);
@@ -217,7 +179,47 @@ export default class GameScene extends Phaser.Scene {
       graphics.lineTo(800, 350);
       graphics.strokePath();
 
+
+      const stopRadio = () => {
+        this.sound.stopByKey("radio1");
+        this.sound.stopByKey("radio2");
+        this.sound.stopByKey("radio3");
+      }
       const tolerance = 5; // Adjust tolerance as needed
+      const heightDif = Math.abs(Math.round(this.randomHeight) - this.targetHeight);
+      const spaceDif = Math.abs(Math.round(this.randomSpacing) - this.targetSpacing);
+      const widthDif = Math.abs(Math.round(this.randomWidth) - this.targetWidth);
+      console.log("width:", widthDif, "height:", heightDif, "space:", spaceDif);
+
+      if (heightDif <= 35 &&
+        spaceDif <= 15 &&
+        widthDif <= 7 &&
+        !this.hasScored) {
+        stopRadio();
+        setTimeout(() => {
+          console.log("radio3");
+
+          this.sound.play("radio3", { loop: true, volume: .1 });
+        }, 200);
+      } else if (heightDif <= 70 &&
+        spaceDif <= 30 &&
+        widthDif <= 12 &&
+        !this.hasScored) {
+        stopRadio();
+        setTimeout(() => {
+          console.log("radio2");
+
+          this.sound.play("radio2", { loop: true, volume: .1 });
+        }, 200);
+      } else {
+        stopRadio();
+        setTimeout(() => {
+          console.log("radio1");
+
+          this.sound.play("radio1", { loop: true, volume: .5 });
+        }, 200);
+      }
+
       if (
         Math.abs(Math.round(this.randomHeight) - this.targetHeight) <= tolerance &&
         Math.abs(Math.round(this.randomSpacing) - this.targetSpacing) <= tolerance &&
@@ -230,14 +232,13 @@ export default class GameScene extends Phaser.Scene {
         scoreText.setText(`SCORE: ${this.score}`);
       }
       if (this.hasScored) {
-        this.countDown?.stop();
         setTimeout(() => {
           generateHeights();
           generateWidth();
           generateSpacing();
           this.hasScored = false;
-          this.countDown?.start(this.handleCountdownFinish.bind(this), 15000);
-        }, 500);
+        }, 300
+        );
       } else { graphics.lineStyle(this.randomWidth, 0xFF6666); }
       this.countDown?.update();
     };
@@ -250,25 +251,257 @@ export default class GameScene extends Phaser.Scene {
       }
     }
 
-    const imageGroup = this.add.group();
     this.add.image(0, 0, "game_background").setOrigin(0);
-    const leftImg = this.add.image(400, 455, "left");
-    const rightImg = this.add.image(450, 455, "right");
-    const upImg = this.add.image(425, 420, "up");
-    const downImg = this.add.image(425, 490, "down");
-    imageGroup.addMultiple([leftImg, rightImg, upImg, downImg]);
-    imageGroup.children.iterate(function (child: any) {
-      child.setScale(0.5);
-    });
-    const cross = this.add.image(775, 30, "cross");
-    cross.setScale(.5);
-    cross.setInteractive();
-    cross.on("pointerdown", () => {
+    const leftImg = this.add.image(150, 475, "left").setScale(0.5).setOrigin(0);
+    const rightImg = this.add.image(250, 475, "right").setScale(0.5).setOrigin(0);
+    const upImg = this.add.image(375, 425, "up").setScale(0.5).setOrigin(0);
+    const downImg = this.add.image(375, 525, "down").setScale(0.5).setOrigin(0);
+    const leftWidth = this.add.image(500, 475, "left").setScale(0.5).setOrigin(0);
+    const rightWidth = this.add.image(600, 475, "right").setScale(0.5).setOrigin(0);
+    const exitButton = this.add.image(743, 20, "exit").setScale(.3);
+    exitButton.setInteractive();
+    exitButton.on("pointerdown", () => {
       this.scene.start(CST.SCENES.TITLE)
+    });
+    exitButton.on("pointerover", () => {
+      this.sound.play("menu_hover", {
+        volume: 0.1
+      });
+      exitButton.setScale(.35);
+    });
+    exitButton.on("pointerout", () => {
+      exitButton.setScale(.3);
+    });
+
+    //keybinding
+    const keyW = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
+    const keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
+    const keyS = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
+    const keyD = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
+    const keyQ = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Q);
+    const keyE = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
+    let wKeypressed = false;
+    let sKeypressed = false;
+    let aKeypressed = false;
+    let dKeypressed = false;
+    let qKeypressed = false;
+    let eKeypressed = false;
+
+    keyQ.on('down', () => {
+      qKeypressed = true;
+      widthAdjustment = -widthAdjustmentSpeed
+      if (Math.round(this.randomWidth) > 1) {
+        leftWidth.setScale(.55).setTint(0x00ff00);
+      } else leftWidth.setScale(.55).setTint(0xff0000);
+    });
+    keyQ.on("up", () => {
+      qKeypressed = false;
+      if (!qKeypressed && !eKeypressed) {
+        widthAdjustment = 0;
+      }
+      leftWidth.setScale(.5).setTint(0xffffff);
     })
+    keyE.on('down', () => {
+      eKeypressed = true;
+      widthAdjustment = widthAdjustmentSpeed
+      if (Math.round(this.randomWidth) <= 20) {
+        rightWidth.setScale(.55).setTint(0x00ff00);
+      } else rightWidth.setScale(.55).setTint(0xff0000);
+    });
+    keyE.on("up", () => {
+      eKeypressed = false;
+      if (!qKeypressed && !eKeypressed) {
+        widthAdjustment = 0;
+      }
+      rightWidth.setScale(.5).setTint(0xffffff);
+    })
+
+    keyW.on('down', () => {
+      wKeypressed = true;
+      heightAdjustment = -adjustmentSpeed;
+      if (this.randomHeight >= 4) {
+        upImg.setScale(.55).setTint(0x00ff00);
+      } else upImg.setScale(.55).setTint(0xff0000);
+    });
+    keyW.on('up', () => {
+      wKeypressed = false;
+      if (!wKeypressed && !sKeypressed) {
+        heightAdjustment = 0;
+      }
+      upImg.setScale(.5).setTint(0xffffff);
+    });
+    keyS.on('down', () => {
+      sKeypressed = true;
+      heightAdjustment = adjustmentSpeed;
+      if (this.randomHeight <= 349) {
+        downImg.setScale(.55).setTint(0x00ff00);
+      } else downImg.setScale(.55).setTint(0xff0000);
+    });
+    keyS.on('up', () => {
+      sKeypressed = false;
+      if (!wKeypressed && !sKeypressed) {
+        heightAdjustment = 0;
+      }
+      downImg.setScale(.50).setTint(0xffffff);
+    });
+    keyA.on('down', () => {
+      aKeypressed = true;
+      spaceAdjustment = -adjustmentSpeed;
+      if (this.randomSpacing >= -199) {
+        leftImg.setScale(.55).setTint(0x00ff00);
+      } else leftImg.setScale(.55).setTint(0xff0000);
+    });
+    keyA.on('up', () => {
+      aKeypressed = false;
+      if (!aKeypressed && !dKeypressed) {
+        spaceAdjustment = 0;
+      }
+      leftImg.setScale(0.5).setTint(0xffffff);
+    });
+    keyD.on('down', () => {
+      dKeypressed = true;
+      spaceAdjustment = adjustmentSpeed;
+      if (this.randomSpacing <= 199) {
+        rightImg.setScale(.55).setTint(0x00ff00);
+      } else rightImg.setScale(.55).setTint(0xff0000);
+    });
+    keyD.on('up', () => {
+      dKeypressed = false;
+      if (!aKeypressed && !dKeypressed) {
+        spaceAdjustment = 0;
+      }
+      rightImg.setScale(0.5).setTint(0xffffff)
+    });
+
+    // Mapping the UI control images to key inputs
+    //left
+    leftImg.setInteractive();
+    leftImg.on("pointerdown", () => {
+      aKeypressed = true;
+      if (aKeypressed) {
+        leftImg.setScale(0.55).setTint(0x00ff00);
+      }
+      spaceAdjustment = -adjustmentSpeed;
+    });
+    leftImg.on("pointerup", () => {
+      aKeypressed = false;
+      leftImg.setScale(0.5).setTint(0xffffff);
+      spaceAdjustment = 0;
+    });
+    leftImg.on("pointerout", () => {
+      aKeypressed = false;
+      leftImg.setScale(0.5).setTint(0xffffff);
+      spaceAdjustment = 0;
+    });
+    //right
+    rightImg.setInteractive();
+    rightImg.on("pointerdown", () => {
+      dKeypressed = true;
+      if (dKeypressed) {
+        if (this.randomSpacing <= 199) {
+          rightImg.setScale(.55).setTint(0x00ff00);
+        } else rightImg.setScale(.55).setTint(0xff0000);
+      }
+      spaceAdjustment = adjustmentSpeed;
+    })
+    rightImg.on("pointerup", () => {
+      dKeypressed = false;
+      rightImg.setScale(0.5).setTint(0xffffff);
+      spaceAdjustment = 0;
+    });
+    rightImg.on("pointerout", () => {
+      dKeypressed = false;
+      rightImg.setScale(0.5).setTint(0xffffff);
+      spaceAdjustment = 0;
+    });
+    //up
+    upImg.setInteractive();
+    upImg.on("pointerdown", () => {
+      wKeypressed = true;
+      if (wKeypressed) {
+        if (this.randomHeight >= 4) {
+          upImg.setScale(.55).setTint(0x00ff00);
+        } else upImg.setScale(.55).setTint(0xff0000);
+      }
+      heightAdjustment = -adjustmentSpeed;
+    });
+    upImg.on("pointerup", () => {
+      wKeypressed = false;
+      upImg.setScale(0.5).setTint(0xffffff);
+      heightAdjustment = 0;
+    });
+    upImg.on("pointerout", () => {
+      wKeypressed = false;
+      upImg.setScale(0.5).setTint(0xffffff);
+      heightAdjustment = 0;
+    });
+    //down
+    downImg.setInteractive();
+    downImg.on("pointerdown", () => {
+      sKeypressed = true;
+      if (sKeypressed) {
+        if (this.randomHeight <= 349) {
+          downImg.setScale(.55).setTint(0x00ff00);
+        } else downImg.setScale(.55).setTint(0xff0000);
+      }
+      heightAdjustment = adjustmentSpeed;
+    });
+    downImg.on("pointerup", () => {
+      sKeypressed = false;
+      downImg.setScale(0.5).setTint(0xffffff);
+      heightAdjustment = 0;
+    });
+    downImg.on("pointerout", () => {
+      sKeypressed = false;
+      downImg.setScale(0.5).setTint(0xffffff);
+      heightAdjustment = 0;
+    });
+    //width
+    leftWidth.setInteractive();
+    leftWidth.on("pointerdown", () => {
+      if (Math.round(this.randomWidth) > 1) {
+        if (this.randomSpacing >= -199) {
+          leftImg.setScale(.55).setTint(0x00ff00);
+        } else leftImg.setScale(.55).setTint(0xff0000);
+      } else leftWidth.setScale(.55).setTint(0xff0000);
+      if (this.randomWidth >= 1) {
+        widthAdjustment = -widthAdjustmentSpeed
+      } else return
+    })
+    leftWidth.on("pointerup", () => {
+      qKeypressed = false;
+      leftWidth.setScale(0.5).setTint(0xffffff);
+      widthAdjustment = 0;
+    });
+    leftWidth.on("pointerout", () => {
+      qKeypressed = false;
+      leftWidth.setScale(0.5).setTint(0xffffff);
+      widthAdjustment = 0;
+    });
+    rightWidth.setInteractive();
+    rightWidth.on("pointerdown", () => {
+      if (Math.round(this.randomWidth) <= 20) {
+        rightWidth.setScale(.55).setTint(0x00ff00);
+      } else rightWidth.setScale(.55).setTint(0xff0000);
+      if (this.randomWidth <= 21) {
+        widthAdjustment = widthAdjustmentSpeed
+      } else return;
+    });
+    rightWidth.on("pointerup", () => {
+      eKeypressed = false;
+      rightWidth.setScale(0.5).setTint(0xffffff);
+      widthAdjustment = 0;
+    });
+    rightWidth.on("pointerout", () => {
+      eKeypressed = false;
+      rightWidth.setScale(0.5).setTint(0xffffff);
+      widthAdjustment = 0;
+    });
+
     // The winning line
     const targetGraphic = this.add.graphics();
-    targetGraphic.lineStyle(this.targetWidth, 0xFF0000);
+    targetGraphic.lineStyle(this.targetWidth,
+      0xed78b2);
     targetGraphic.beginPath();
     targetGraphic.moveTo(0, 350);
     targetGraphic.lineTo(add(100, true), this.targetHeight);
@@ -282,7 +515,7 @@ export default class GameScene extends Phaser.Scene {
     targetGraphic.strokePath();
     // The random line
     const graphics = this.add.graphics();
-    graphics.lineStyle(this.randomWidth, 0xFF6666);
+    graphics.lineStyle(this.randomWidth, 0xe5003f);
     graphics.beginPath();
     graphics.moveTo(0, 350);
     graphics.lineTo(add(100, false), this.randomHeight);
@@ -296,14 +529,10 @@ export default class GameScene extends Phaser.Scene {
     graphics.strokePath();
 
     this.countDown = new CountdownController(this, timeText);
-    this.countDown.start(this.handleCountdownFinish.bind(this), 15000);
+    this.countDown.start(this.handleCountdownFinish.bind(this), 20000);
 
   }
   handleCountdownFinish = () => {
-    console.log("finished");
-  }
-
-  gameOver() {
-    console.log("game over")
+    this.scene.start(CST.SCENES.ENDGAME, { score: this.score, test: "test" });
   }
 }

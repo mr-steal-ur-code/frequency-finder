@@ -8,18 +8,18 @@ export default class HowToPlay extends Phaser.Scene {
   }
   preload() {
     this.load.image('howtoplay', 'assets/images/howtoplay.png');
-    this.load.image('exit', 'assets/ui/ExitButton.png');
+    this.load.image('back', 'assets/ui/back.png');
   }
   create() {
     this.add.image(400, 300, 'howtoplay');
-    const back = this.add.text(5, 5, "< BACK", { fontFamily: '"Roboto Condensed"', fontSize: '26px', color: "#111" });
+    const back = this.add.image(5, 5, "back").setScale(.3).setOrigin(0);
     back.setDepth(2);
     back.setInteractive();
     back.on("pointerover", () => {
-      back.setScale(1.1)
+      back.setScale(.32)
     });
     back.on("pointerout", () => {
-      back.setScale(1)
+      back.setScale(.3)
     })
     back.on("pointerdown", () => {
       this.scene.start(CST.SCENES.TITLE)

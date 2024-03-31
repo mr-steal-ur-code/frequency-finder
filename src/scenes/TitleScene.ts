@@ -8,12 +8,12 @@ export default class TitleScene extends Phaser.Scene {
     })
   }
   preload() {
-    this.load.image('background', 'assets/images/titleBackground.jpg');
+    this.load.image('background', 'assets/images/background.png');
     this.load.image('start', 'assets/ui/StartButton.png');
     this.load.image('how_to_play', 'assets/ui/instructions.png');
     this.load.audio("title_music", "./assets/music/title_music.mp3");
     this.load.audio("menu_hover", "./assets/sfx/menu_hover.mp3");
-    this.load.image("frequencyfinder", "./assets/images/frequencyfinder.png")
+    this.load.image("logo", "./assets/logos/logo.png")
 
     //loading bar
     const loadingBar = this.add.graphics({
@@ -21,13 +21,12 @@ export default class TitleScene extends Phaser.Scene {
         color: 0xffffff
       }
     })
-    const loadingText = this.add.text(
+    this.add.text(
       (this.game.renderer.width / 2),
       (this.game.renderer.height / 2 - 50),
       'Loading...',
       { fontFamily: 'Arial', fontSize: '24px', color: "#d6d6d6" }
-    );
-    loadingText.setOrigin(0.5);
+    ).setOrigin(0.5);
     //simulate load
     // for (let i = 0; i < 2500; i++) {
     //   this.load.text(`${i}`);
@@ -35,24 +34,25 @@ export default class TitleScene extends Phaser.Scene {
 
     this.load.on("progress", (percent: any) => {
       loadingBar.fillRect(0, this.game.renderer.height / 2, this.game.renderer.width * percent, 40);
-      console.log(percent);
+      console.log("title percent:", percent);
     })
   }
 
   create() {
     this.add.image(400, 300, 'background');
     this.sound.play("title_music", {
-      loop: true
+      loop: true,
+      volume: .5
     })
     this.sound.pauseOnBlur = false;
-    this.add.image(400, 150, 'frequencyfinder');
+    this.add.image(400, 170, 'logo');
 
     const howToPlayButton = this.add.image(400, 360, "how_to_play");
     howToPlayButton.setScale(.25);
     howToPlayButton.setInteractive();
     howToPlayButton.on("pointerover", () => {
       this.sound.play("menu_hover", {
-        volume: 0.4
+        volume: 0.1
       });
       howToPlayButton.setScale(.3);
     });
@@ -65,9 +65,8 @@ export default class TitleScene extends Phaser.Scene {
     const startButton = this.add.image(400, 450, 'start');
     startButton.setInteractive();
     startButton.on("pointerover", () => {
-      console.log("in");
       this.sound.play("menu_hover", {
-        volume: 0.4
+        volume: 0.1
       });
       startButton.setScale(1.05);
     })
