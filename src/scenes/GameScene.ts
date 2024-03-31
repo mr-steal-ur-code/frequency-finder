@@ -11,6 +11,10 @@ export default class GameScene extends Phaser.Scene {
   score: number;
   countDown: CountdownController | undefined;
   hasScored: boolean;
+  play1: boolean;
+  play2: boolean;
+  play3: boolean;
+  playScore: boolean;
   constructor() {
     super({
       key: CST.SCENES.GAME
@@ -23,17 +27,19 @@ export default class GameScene extends Phaser.Scene {
     this.targetWidth = 0;
     this.score = 0;
     this.hasScored = false;
+    this.play1 = false;
+    this.play2 = false;
+    this.play3 = false;
+    this.playScore = false;
   }
   preload() {
     this.load.image("game_background", "./assets/images/gameBackground.png");
-    this.load.image("exit", "assets/ui/exitbutton.png");
-    this.load.image("right", "assets/ui/right.png");
-    this.load.image("left", "assets/ui/left.png");
-    this.load.image("up", "assets/ui/up.png");
-    this.load.image("down", "assets/ui/down.png");
-    this.load.audio("radio1", "assets/sfx/radio1.mp3");
-    this.load.audio("radio2", "assets/sfx/radio2.mp3");
-    this.load.audio("radio3", "assets/sfx/radio3.mp3");
+    this.load.image("exit", "./assets/ui/exitbutton.png");
+    this.load.image("right", "./assets/ui/right.png");
+    this.load.image("left", "./assets/ui/left.png");
+    this.load.image("up", "./assets/ui/up.png");
+    this.load.image("down", "./assets/ui/down.png");
+    this.load.audioSprite("radio", "./assets/audio.json", ["./assets/sfx/radio.mp3"]);
 
     //loading bar
     const loadingBar = this.add.graphics({
@@ -61,6 +67,37 @@ export default class GameScene extends Phaser.Scene {
 
   }
   create(data: any) {
+    this.sound.stopAll();
+    let prevPlay1 = false;
+    let prevPlay2 = false;
+    let prevPlay3 = false;
+    let prevPlayScore = false;
+
+    const playAudioSprite = (play1: boolean, play2: boolean, play3: boolean, playScore: boolean) => {
+      if (play3 && !prevPlay3) {
+        console.log("radio3");
+        this.sound.stopAll();
+        this.sound.playAudioSprite("radio", "radio3");
+      } else if (play2 && !prevPlay2) {
+        console.log("radio2");
+        this.sound.stopAll();
+        this.sound.playAudioSprite("radio", "radio2");
+      } else if (play1 && !prevPlay1) {
+        console.log("radio1");
+        this.sound.stopAll();
+        this.sound.playAudioSprite("radio", "radio1");
+      } else if (playScore && !prevPlayScore) {
+        console.log("play score");
+        this.sound.stopAll();
+        this.sound.playAudioSprite("radio", "score");
+      }
+
+      // Update previous values
+      prevPlay1 = play1;
+      prevPlay2 = play2;
+      prevPlay3 = play3;
+      prevPlayScore = playScore;
+    }
     this.score = data["score"] ?? 0;
     const generateHeights = () => {
       this.randomHeight = 0;
@@ -179,53 +216,51 @@ export default class GameScene extends Phaser.Scene {
       graphics.lineTo(800, 350);
       graphics.strokePath();
 
-
-      const stopRadio = () => {
-        this.sound.stopByKey("radio1");
-        this.sound.stopByKey("radio2");
-        this.sound.stopByKey("radio3");
-      }
       const tolerance = 5; // Adjust tolerance as needed
       const heightDif = Math.abs(Math.round(this.randomHeight) - this.targetHeight);
       const spaceDif = Math.abs(Math.round(this.randomSpacing) - this.targetSpacing);
       const widthDif = Math.abs(Math.round(this.randomWidth) - this.targetWidth);
-      console.log("width:", widthDif, "height:", heightDif, "space:", spaceDif);
 
       if (heightDif <= 35 &&
         spaceDif <= 15 &&
         widthDif <= 7 &&
         !this.hasScored) {
-        stopRadio();
-        setTimeout(() => {
-          console.log("radio3");
-
-          this.sound.play("radio3", { loop: true, volume: .1 });
-        }, 200);
+        console.log("radio3");
+        this.playScore = false;
+        this.play1 = false;
+        this.play2 = false;
+        this.play3 = true;
+      } else if (heightDif <= tolerance &&
+        spaceDif <= tolerance &&
+        widthDif <= tolerance &&
+        !this.hasScored) {
+        playAudioSprite(this.play1, this.play2, this.play3, this.playScore);
       } else if (heightDif <= 70 &&
         spaceDif <= 30 &&
         widthDif <= 12 &&
         !this.hasScored) {
-        stopRadio();
-        setTimeout(() => {
-          console.log("radio2");
-
-          this.sound.play("radio2", { loop: true, volume: .1 });
-        }, 200);
-      } else {
-        stopRadio();
-        setTimeout(() => {
-          console.log("radio1");
-
-          this.sound.play("radio1", { loop: true, volume: .5 });
-        }, 200);
+        console.log("radio2");
+        this.playScore = false;
+        this.play1 = false;
+        this.play2 = true;
+        this.play3 = false;
+      } else if (heightDif > 70 &&
+        spaceDif > 30 &&
+        widthDif > 12 &&
+        !this.hasScored) {
+        console.log("radio1");
+        this.playScore = false;
+        this.play1 = true;
+        this.play2 = false;
+        this.play3 = false;
       }
+      playAudioSprite(this.play1, this.play2, this.play3, this.playScore);
 
-      if (
-        Math.abs(Math.round(this.randomHeight) - this.targetHeight) <= tolerance &&
-        Math.abs(Math.round(this.randomSpacing) - this.targetSpacing) <= tolerance &&
-        Math.abs(Math.round(this.randomWidth) - this.targetWidth) <= 1 &&
-        !this.hasScored
-      ) {
+      if (heightDif <= tolerance &&
+        spaceDif <= tolerance &&
+        widthDif <= tolerance &&
+        !this.hasScored) {
+        this.playScore = true;
         this.hasScored = true;
         this.score += 100;
         console.log("score:", this.score);
@@ -236,10 +271,11 @@ export default class GameScene extends Phaser.Scene {
           generateHeights();
           generateWidth();
           generateSpacing();
+          this.playScore = false;
           this.hasScored = false;
         }, 300
         );
-      } else { graphics.lineStyle(this.randomWidth, 0xFF6666); }
+      } else { graphics.lineStyle(this.randomWidth, 0xFF6666); this.playScore = false; }
       this.countDown?.update();
     };
 
@@ -258,16 +294,17 @@ export default class GameScene extends Phaser.Scene {
     const downImg = this.add.image(375, 525, "down").setScale(0.5).setOrigin(0);
     const leftWidth = this.add.image(500, 475, "left").setScale(0.5).setOrigin(0);
     const rightWidth = this.add.image(600, 475, "right").setScale(0.5).setOrigin(0);
-    const exitButton = this.add.image(743, 20, "exit").setScale(.3);
+    const exitButton = this.add.image(685, 2, "exit").setScale(.3).setOrigin(0);
     exitButton.setInteractive();
     exitButton.on("pointerdown", () => {
-      this.scene.start(CST.SCENES.TITLE)
+      this.sound.stopAll();
+      this.scene.start(CST.SCENES.TITLE);
     });
     exitButton.on("pointerover", () => {
       this.sound.play("menu_hover", {
         volume: 0.1
       });
-      exitButton.setScale(.35);
+      exitButton.setScale(.33);
     });
     exitButton.on("pointerout", () => {
       exitButton.setScale(.3);

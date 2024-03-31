@@ -9,12 +9,18 @@ export default class EndGame extends Phaser.Scene {
   preload() {
     this.load.image('menu', 'assets/ui/menu.png');
     this.load.image('restart', 'assets/ui/restart.png');
-    this.load.image("finalscore", "assets/ui/finalscore.png")
+    this.load.image("finalscore", "assets/ui/finalscore.png");
+    this.load.audio("endgame", "assets/music/endgame.mp3");
   }
   create(data: any) {
+    this.sound.stopAll();
+    this.sound.play("endgame", {
+      loop: true,
+      volume: .5
+    })
     this.add.image(400, 300, 'background');
-    this.add.image(300, 225, "finalscore");
-    this.add.text(500, 185, `${data["score"]}`, { fontSize: "50px", color: "#ed78b2", stroke: "#e5003f", strokeThickness: 4, fontFamily: "'Brush Script MT', cursive" });
+    this.add.image(300, 185, "finalscore");
+    this.add.text(500, 144, `${data["score"]}`, { fontSize: "50px", color: "#ed78b2", stroke: "#e5003f", strokeThickness: 4, fontFamily: "'Brush Script MT', cursive" });
     const restartButton = this.add.image(400, 325, 'restart');
     restartButton.setInteractive();
     restartButton.on("pointerover", () => {

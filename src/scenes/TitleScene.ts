@@ -11,7 +11,7 @@ export default class TitleScene extends Phaser.Scene {
     this.load.image('background', 'assets/images/background.png');
     this.load.image('start', 'assets/ui/StartButton.png');
     this.load.image('how_to_play', 'assets/ui/instructions.png');
-    this.load.audio("title_music", "./assets/music/title_music.mp3");
+    this.load.audio("main_menu_theme", "./assets/music/main_menu_theme.mp3");
     this.load.audio("menu_hover", "./assets/sfx/menu_hover.mp3");
     this.load.image("logo", "./assets/logos/logo.png")
 
@@ -40,7 +40,7 @@ export default class TitleScene extends Phaser.Scene {
 
   create() {
     this.add.image(400, 300, 'background');
-    this.sound.play("title_music", {
+    this.sound.play("main_menu_theme", {
       loop: true,
       volume: .5
     })
