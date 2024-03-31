@@ -568,7 +568,7 @@ export default class GameScene extends Phaser.Scene {
     graphics.strokePath();
 
     this.countDown = new CountdownController(this, timeText);
-    this.countDown.start(this.handleCountdownFinish.bind(this), 20000);
+    this.countDown.start(this.handleCountdownFinish.bind(this), 45000);
 
   }
   handleCountdownFinish = () => {
